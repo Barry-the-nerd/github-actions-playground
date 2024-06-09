@@ -4,3 +4,4 @@ RUN echo "Hello, world!" > /message.txt
 
 CMD ["cat", "/message.txt"]
 
+
