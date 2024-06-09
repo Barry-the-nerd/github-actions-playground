@@ -1,0 +1,54 @@
+name: Cleanup Old Docker Images
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # This sets the workflow to run nightly at midnight UTC
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Docker CLI
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y jq
+
+    - name: Authenticate with GitHub Container Registry
+      run: echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+
+    - name: List and delete old Docker images
+      env:
+        DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+        REPO: stellarhub/dev-target
+      run: |
+        # Get the list of images
+        images=$(curl -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/tags/list" | jq -r '.tags[]')
+        echo "Fetched image tags: $images"
+        
+        # Get the current date in seconds
+        current_date=$(date +%s)
+        
+        for image in $images; do
+          # Get the image details
+          image_info=$(curl -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/manifests/$image")
+          echo "Fetched details for image: $image"
+          
+          # Get the creation date of the image in seconds
+          created_date=$(echo $image_info | jq -r '.history[0].v1Compatibility' | jq -r '.created' | xargs -I{} date -d {} +%s)
+          echo "Image $image was created on $(date -d @$created_date)"
+
+          # Calculate the age of the image in days
+          age_days=$(( (current_date - created_date) / 86400 ))
+          echo "Image $image is $age_days days old"
+
+          # Delete the image if it is older than 60 days (2 months)
+          if [ $age_days -gt 60 ]; then
+            digest=$(curl -I -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/manifests/$image" | grep Docker-Content-Digest | awk '{print $2}')
+            curl -X DELETE -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/manifests/${digest//[$'\t\r\n']}"
+            echo "Deleted image: $image (age: $age_days days)"
+          fi
+        done
