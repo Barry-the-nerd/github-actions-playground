@@ -1,0 +1,29 @@
+name: Approve and Push to Prod
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy to production'
+        required: true
+        default: 'latest'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Pull dev image
+      run: docker pull stellarhub/dev-target:${{ github.event.inputs.tag }}
+
+    - name: Tag image for prod
+      run: docker tag stellarhub/dev-target:${{ github.event.inputs.tag }} stellarhub/prod-target:${{ github.event.inputs.tag }}
+
+    - name: Push prod image
+      run: docker push stellarhub/prod-target:${{ github.event.inputs.tag }}

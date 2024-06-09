@@ -1,0 +1,27 @@
+name: Rollback Prod
+
+on:
+  workflow_dispatch:
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Get the previous image tag
+      id: prev-tag
+      run: |
+        PREVIOUS_TAG=$(docker images stellarhub/prod-target --format "{{.Tag}}" | sort -r | sed -n 2p)
+        echo "PREVIOUS_TAG=$PREVIOUS_TAG" >> $GITHUB_ENV
+
+    - name: Pull previous image
+      run: docker pull stellarhub/prod-target:${{ env.PREVIOUS_TAG }}
+
+    - name: Tag previous image as latest
+      run: docker tag stellarhub/prod-target:${{ env.PREVIOUS_TAG }} stellarhub/prod-target:latest
+
+    - name: Push previous image as latest
+      run: docker push stellarhub/prod-target:latest

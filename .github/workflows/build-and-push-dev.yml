@@ -1,0 +1,50 @@
+name: Build and Push to Dev
+
+on:
+  push:
+    paths:
+      - Dockerfile
+  schedule:
+    - cron: '0 2 * * *' # Nightly build at 2am
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Docker Build Timestamp
+      id: vars
+      run: |
+        TIMESTAMP=$(date +'%Y%m%d%H%M%S')
+        echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Build Docker image
+      run: docker build -t stellarhub/dev-target:${{ env.TIMESTAMP }} .
+
+    - name: Push Docker image
+      run: docker push stellarhub/dev-target:${{ env.TIMESTAMP }}
+
+    - name: Update latest tag
+      run: |
+        docker tag stellarhub/dev-target:${{ env.TIMESTAMP }} stellarhub/dev-target:latest
+        docker push stellarhub/dev-target:latest
+
+    - name: Save Dockerfile and tag information
+      run: |
+        echo "Build Tag: ${{ env.TIMESTAMP }}" > build-info.txt
+        cp Dockerfile dockerfile-${{ env.TIMESTAMP }}
+      shell: bash
+
+    - name: Upload Dockerfile and build tag as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: dockerfile-and-tag
+        path: |
+          build-info.txt
+          dockerfile-${{ env.TIMESTAMP }}

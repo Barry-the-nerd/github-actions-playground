@@ -1,0 +1,25 @@
+name: Rollback to Specific Tag
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to rollback to'
+        required: true
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Log in to Docker Hub
+      run: echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+    - name: Pull specified image
+      run: docker pull stellarhub/prod-target:${{ github.event.inputs.tag }}
+
+    - name: Tag specified image as latest
+      run: docker tag stellarhub/prod-target:${{ github.event.inputs.tag }} stellarhub/prod-target:latest
+
+    - name: Push specified image as latest
+      run: docker push stellarhub/prod-target:latest
