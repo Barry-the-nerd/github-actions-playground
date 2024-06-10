@@ -26,8 +26,37 @@ jobs:
         DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
         REPO: stellarhub/dev-target
       run: |
-        # Get the list of images
-        images=$(curl -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/tags/list" | jq -r '.tags[]')
+        # Function to fetch all tags with pagination
+        fetch_tags() {
+          local repo=$1
+          local token=$2
+          local page=1
+          local per_page=100
+          local tags=()
+
+          while true; do
+            response=$(curl -s -H "Authorization: Bearer $token" "https://ghcr.io/v2/${repo}/tags/list?n=${per_page}&page=${page}")
+            new_tags=$(echo $response | jq -r '.tags | select(. != null) | .[]')
+            
+            if [ -z "$new_tags" ]; then
+              break
+            fi
+
+            tags+=($new_tags)
+            page=$((page + 1))
+          done
+
+          echo "${tags[@]}"
+        }
+
+        # Fetch all tags
+        images=$(fetch_tags $REPO $DOCKER_ACCESS_TOKEN)
+        
+        if [ -z "$images" ]; then
+          echo "No images found in the repository."
+          exit 0
+        fi
+        
         echo "Fetched image tags: $images"
         
         # Get the current date in seconds
@@ -35,7 +64,7 @@ jobs:
         
         for image in $images; do
           # Get the image details
-          image_info=$(curl -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/manifests/$image")
+          image_info=$(curl -s -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/manifests/$image")
           echo "Fetched details for image: $image"
           
           # Get the creation date of the image in seconds
@@ -48,7 +77,7 @@ jobs:
 
           # Delete the image if it is older than 60 days (2 months)
           if [ $age_days -gt 60 ]; then
-            digest=$(curl -I -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/manifests/$image" | grep Docker-Content-Digest | awk '{print $2}')
+            digest=$(curl -sI -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/manifests/$image" | grep Docker-Content-Digest | awk '{print $2}')
             curl -X DELETE -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/manifests/${digest//[$'\t\r\n']}"
             echo "Deleted image: $image (age: $age_days days)"
           fi
