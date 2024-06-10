@@ -5,7 +5,6 @@ on:
     paths:
       - '/Dockerfile' # use 'Dockerfile' for any Dockerfile in the repo
       - '.github/workflows/build-and-push-dev.yml' # Trigger when yml is updated
-        # the commit message is shown in the workflow run
     branches:
       - main # Change to main branch
   schedule:
