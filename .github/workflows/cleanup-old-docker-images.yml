@@ -78,10 +78,28 @@ jobs:
         for image in $images; do
           # Get the image details
           image_info=$(curl -s -u $DOCKER_USERNAME:$DOCKER_ACCESS_TOKEN "https://hub.docker.com/v2/repositories/${REPO}/tags/${image}/")
-          echo "Fetched details for image: $image"
           
+          # Check if the image details request was successful
+          if echo "$image_info" | grep -q '"message":"httperror 404:'; then
+            echo "Image $image not found, skipping..."
+            continue
+          fi
+          
+          echo "Fetched details for image: $image"
+
           # Get the creation date of the image in seconds
-          created_date=$(echo $image_info | jq -r '.last_updated' | xargs -I{} date -d {} +%s)
+          created_date=$(echo $image_info | jq -r '.last_updated')
+
+          if [ "$created_date" == "null" ] || [ -z "$created_date" ]; then
+            echo "Image $image has an invalid date, skipping..."
+            continue
+          fi
+
+          created_date=$(date -d "$created_date" +%s 2>/dev/null || echo "null")
+          if [ "$created_date" == "null" ]; then
+            echo "Image $image has an invalid date format, skipping..."
+            continue
+          fi
           echo "Image $image was created on $(date -d @$created_date)"
 
           # Calculate the age of the image in hours
@@ -90,7 +108,6 @@ jobs:
 
           # Delete the image if it is older than 5 hours
           if [ $age_hours -gt 5 ]; then
-            digest=$(echo $image_info | jq -r '.digest')
             curl -X DELETE -u $DOCKER_USERNAME:$DOCKER_ACCESS_TOKEN "https://hub.docker.com/v2/repositories/${REPO}/tags/${image}/"
             echo "Deleted image: $image (age: $age_hours hours)"
           fi
