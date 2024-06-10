@@ -48,22 +48,25 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
-    - name: Build Docker image
-      run: docker build -t ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} .
+    - name: Set up Docker Buildx
+      run: |
+        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+        docker buildx create --name mybuilder --use
+        docker buildx inspect --bootstrap
 
-    - name: Push Docker image with provided or default tag
-      run: docker push ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }}
+    - name: Build and push Docker image for multiple architectures
+      run: |
+        docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} --push .
 
     - name: Get image digest
       id: get_digest
       run: |
-        DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} | cut -d'@' -f2)
+        DIGEST=$(docker buildx imagetools inspect ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} | grep -m 1 "Digest:" | awk '{ print $2 }')
         echo "DIGEST=$DIGEST" >> $GITHUB_ENV
 
     - name: Push Docker image with latest tag
       run: |
-        docker tag ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} ${{ env.DEV_IMAGE_NAME }}:latest
-        docker push ${{ env.DEV_IMAGE_NAME }}:latest
+        docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.DEV_IMAGE_NAME }}:latest --push .
 
     - name: Save Dockerfile and tag information to JSON
       run: |
