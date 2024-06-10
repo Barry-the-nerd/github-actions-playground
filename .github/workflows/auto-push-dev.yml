@@ -77,3 +77,7 @@ jobs:
       with:
         name: dev-build-info
         path: dev-build-info.json
+
+    - name: Log to Google Sheets
+      run: |
+        curl -X POST -H "Content-Type: application/json" -d '{"image_name": "${{ env.DEV_IMAGE_NAME }}", "tag": "${{ env.TAG }}", "digest": "${{ env.DIGEST }}"}' ${{ secrets.GOOGLE_SHEETS_WEB_APP_URL }}
