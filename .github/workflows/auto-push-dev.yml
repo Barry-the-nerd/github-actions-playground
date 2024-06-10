@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - '/Dockerfile' 
-      - '.github/workflows/build-and-push-dev.yml' 
+      - '.github/workflows/auto-push-dev.yml' 
     branches:
       - dev
   schedule:
