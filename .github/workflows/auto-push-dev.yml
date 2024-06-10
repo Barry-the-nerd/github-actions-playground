@@ -10,11 +10,6 @@ on:
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag for the Docker image'
-        required: false
-        default: ''
 
 jobs:
   build:
@@ -87,3 +82,4 @@ jobs:
       if: failure()
       run: |
         curl -X POST -H "Content-Type: application/json" -d '{"image_name": "${{ env.DEV_IMAGE_NAME }}", "tag": "${{ env.TAG }}", "digest": "${{ env.DIGEST }}", "status": "failed"}' ${{ secrets.GOOGLE_SHEETS_WEB_APP_URL }}
+
