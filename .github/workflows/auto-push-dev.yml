@@ -1,4 +1,4 @@
-name: Build and Push to Dev x
+name: Build and Push to Dev
 
 on:
   push:
@@ -76,10 +76,13 @@ jobs:
     - name: Log success to Google Sheets
       if: success()
       run: |
-        curl -X POST -H "Content-Type: application/json" -d '{"image_name": "${{ env.DEV_IMAGE_NAME }}", "tag": "${{ env.TAG }}", "digest": "${{ env.DIGEST }}", "status": "successful"}' ${{ secrets.GOOGLE_SHEETS_WEB_APP_URL }}
+        JSON_PAYLOAD=$(echo '{"image_name": "${{ env.DEV_IMAGE_NAME }}", "tag": "${{ env.TAG }}", "digest": "${{ env.DIGEST }}", "status": "successful"}')
+        echo "Sending JSON payload: $JSON_PAYLOAD"
+        curl -X POST -H "Content-Type: application/json" -d "$JSON_PAYLOAD" ${{ secrets.GOOGLE_SHEETS_WEB_APP_URL }}
 
     - name: Log failure to Google Sheets
       if: failure()
       run: |
-        curl -X POST -H "Content-Type: application/json" -d '{"image_name": "${{ env.DEV_IMAGE_NAME }}", "tag": "${{ env.TAG }}", "digest": "${{ env.DIGEST }}", "status": "failed"}' ${{ secrets.GOOGLE_SHEETS_WEB_APP_URL }}
-
+        JSON_PAYLOAD=$(echo '{"image_name": "${{ env.DEV_IMAGE_NAME }}", "tag": "${{ env.TAG }}", "digest": "${{ env.DIGEST }}", "status": "failed"}')
+        echo "Sending JSON payload: $JSON_PAYLOAD"
+        curl -X POST -H "Content-Type: application/json" -d "$JSON_PAYLOAD" ${{ secrets.GOOGLE_SHEETS_WEB_APP_URL }}
