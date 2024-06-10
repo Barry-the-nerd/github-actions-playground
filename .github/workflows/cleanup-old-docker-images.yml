@@ -30,6 +30,8 @@ jobs:
         DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
         REPO: stellarhub/dev-target
       run: |
+        set -e
+
         # Function to fetch all tags with pagination
         fetch_tags() {
           local repo=$1
@@ -108,7 +110,11 @@ jobs:
 
           # Delete the image if it is older than 5 hours
           if [ $age_hours -gt 5 ]; then
-            curl -X DELETE -u $DOCKER_USERNAME:$DOCKER_ACCESS_TOKEN "https://hub.docker.com/v2/repositories/${REPO}/tags/${image}/"
-            echo "Deleted image: $image (age: $age_hours hours)"
+            delete_response=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -u $DOCKER_USERNAME:$DOCKER_ACCESS_TOKEN "https://hub.docker.com/v2/repositories/${REPO}/tags/${image}/")
+            if [ "$delete_response" -eq 204 ]; then
+              echo "Deleted image: $image (age: $age_hours hours)"
+            else
+              echo "Failed to delete image: $image (HTTP status: $delete_response)"
+            fi
           fi
         done
