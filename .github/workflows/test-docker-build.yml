@@ -4,7 +4,7 @@ on:
   push:
     paths:
       - 'Dockerfile'
-      - '.github/workflows/docker-publish.yml' # Trigger also when the workflow file is updated
+      # - '.github/workflows/docker-publish.yml' # Trigger also when the workflow file is updated
     branches:
       - main # Change to your default branch
   workflow_dispatch:  # Allows manual triggering
