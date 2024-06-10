@@ -3,6 +3,7 @@ name: Cleanup Old Docker Images
 on:
   schedule:
     - cron: '0 0 * * *'  # This sets the workflow to run nightly at midnight UTC
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   cleanup:
