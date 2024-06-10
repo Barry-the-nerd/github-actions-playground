@@ -10,11 +10,6 @@ on:
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag for the Docker image'
-        required: false
-        default: ''
 
 jobs:
   build:
