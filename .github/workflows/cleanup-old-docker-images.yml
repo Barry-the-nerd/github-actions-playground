@@ -25,7 +25,7 @@ jobs:
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
-        
+
     - name: List and delete old Docker images
       env:
         DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
@@ -77,14 +77,16 @@ jobs:
           echo "Image $image was created on $(date -d @$created_date)"
 
           # Calculate the age of the image in days
-          # age_days=$(( (current_date - created_date) / 86400 ))
-          age_days=$(( (current_date - created_date) / 18000 ))
+          age_days=$(( (current_date - created_date) / 86400 ))
+          age_hours=$(( (current_date - created_date) / 3600 ))
           echo "Image $image is $age_days days old"
 
           # Delete the image if it is older than 60 days (2 months)
-          if [ $age_days -gt 60 ]; then
+          # if [ $age_days -gt 60 ]; then
+          if [ $age_hours -gt 5 ]; then
             digest=$(curl -sI -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/manifests/$image" | grep Docker-Content-Digest | awk '{print $2}')
             curl -X DELETE -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/manifests/${digest//[$'\t\r\n']}"
-            echo "Deleted image: $image (age: $age_days days)"
+            # echo "Deleted image: $image (age: $age_days days)"
+            echo "Deleted image: $image (age: $age_hours hours)"
           fi
         done
