@@ -6,10 +6,6 @@ on:
       - dev
     paths:
       - '/Dockerfile'
-  push:
-    branches:
-      - main
-    paths:
       - '.github/workflows/auto-push-dev.yml'
   schedule:
     - cron: '0 2 * * *'
