@@ -65,11 +65,11 @@ jobs:
       run: |
         JSON_PAYLOAD=$(echo '{"image_name": "${{ env.TARGET_IMAGE_NAME }}", "tag": "${{ env.TAG }}", "digest": "${{ env.DIGEST }}", "status": "successful", "env": "test"}')
         echo "Sending JSON payload: $JSON_PAYLOAD"
-        curl -X POST -H "Content-Type: application/json" -d "$JSON_PAYLOAD" ${{ secrets.GOOGLE_SHEETS_WEB_APP_TEST_ENV }}
+        curl -X POST -H "Content-Type: application/json" -d "$JSON_PAYLOAD" ${{ secrets.GOOGLE_SHEETS_WEB_APP_URL }}
 
     - name: Log failure to Google Sheets
       if: failure()
       run: |
         JSON_PAYLOAD=$(echo '{"image_name": "${{ env.TARGET_IMAGE_NAME }}", "tag": "${{ env.TAG }}", "digest": "${{ env.DIGEST }}", "status": "failed", "env": "test"}')
         echo "Sending JSON payload: $JSON_PAYLOAD"
-        curl -X POST -H "Content-Type: application/json" -d "$JSON_PAYLOAD" ${{ secrets.GOOGLE_SHEETS_WEB_APP_TEST_ENV }}
+        curl -X POST -H "Content-Type: application/json" -d "$JSON_PAYLOAD" ${{ secrets.GOOGLE_SHEETS_WEB_APP_URL }}
