@@ -12,6 +12,10 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      DEV_IMAGE_NAME: stellarhub/dev-target
+      PROD_IMAGE_NAME: stellarhub/prod-target
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -38,29 +42,28 @@ jobs:
         password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
     - name: Pull dev image
-      id: pull_image
-      run: docker pull stellarhub/dev-target:${{ env.TAG }}
+      run: docker pull ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }}
 
     - name: Get image digest
       id: get_digest
       run: |
-        DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' stellarhub/dev-target:${{ env.TAG }} | cut -d'@' -f2)
+        DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} | cut -d'@' -f2)
         echo "DIGEST=$DIGEST" >> $GITHUB_ENV
 
     - name: Tag image for prod
-      run: docker tag stellarhub/dev-target:${{ env.TAG }} stellarhub/prod-target:${{ env.TAG }}
+      run: docker tag ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} ${{ env.PROD_IMAGE_NAME }}:${{ env.TAG }}
 
     - name: Push prod image with provided or default tag
-      run: docker push stellarhub/prod-target:${{ env.TAG }}
+      run: docker push ${{ env.PROD_IMAGE_NAME }}:${{ env.TAG }}
 
     - name: Push prod image with latest tag
       run: |
-        docker tag stellarhub/prod-target:${{ env.TAG }} stellarhub/prod-target:latest
-        docker push stellarhub/prod-target:latest
+        docker tag ${{ env.PROD_IMAGE_NAME }}:${{ env.TAG }} ${{ env.PROD_IMAGE_NAME }}:latest
+        docker push ${{ env.PROD_IMAGE_NAME }}:latest
 
     - name: Save tag information to JSON
       run: |
-        echo "{\"image_name\": \"stellarhub/prod-target\", \"tag\": \"${{ env.TAG }}\", \"digest\": \"${{ env.DIGEST }}\"}" > prod-build-info.json
+        echo "{\"image_name\": \"${{ env.PROD_IMAGE_NAME }}\", \"tag\": \"${{ env.TAG }}\", \"digest\": \"${{ env.DIGEST }}\"}" > prod-build-info.json
 
     - name: Upload build info as artifact
       uses: actions/upload-artifact@v4

@@ -20,6 +20,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      DEV_IMAGE_NAME: stellarhub/dev-target
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -46,28 +49,28 @@ jobs:
         password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
     - name: Build Docker image
-      run: docker build -t stellarhub/dev-target:${{ env.TAG }} .
+      run: docker build -t ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} .
 
     - name: Get image digest
       id: get_digest
       run: |
-        DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' stellarhub/dev-target:${{ env.TAG }} | cut -d'@' -f2)
+        DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} | cut -d'@' -f2)
         echo "DIGEST=$DIGEST" >> $GITHUB_ENV
 
     - name: Push Docker image with provided or default tag
-      run: docker push stellarhub/dev-target:${{ env.TAG }}
+      run: docker push ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }}
 
     - name: Push Docker image with latest tag
       run: |
-        docker tag stellarhub/dev-target:${{ env.TAG }} stellarhub/dev-target:latest
-        docker push stellarhub/dev-target:latest
+        docker tag ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} ${{ env.DEV_IMAGE_NAME }}:latest
+        docker push ${{ env.DEV_IMAGE_NAME }}:latest
 
     - name: Save Dockerfile and tag information to JSON
       run: |
-        echo "{\"image_name\": \"stellarhub/dev-target\", \"tag\": \"${{ env.TAG }}\", \"digest\": \"${{ env.DIGEST }}\"}" > build-info.json
+        echo "{\"image_name\": \"${{ env.DEV_IMAGE_NAME }}\", \"tag\": \"${{ env.TAG }}\", \"digest\": \"${{ env.DIGEST }}\"}" > dev-build-info.json
 
     - name: Upload build info as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: build-info
-        path: build-info.json
+        name: dev-build-info
+        path: dev-build-info.json
