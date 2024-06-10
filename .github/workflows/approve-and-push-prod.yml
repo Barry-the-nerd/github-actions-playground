@@ -1,4 +1,4 @@
-name: new Approve and Push to Prod
+name: Approve and Push to Prod
 
 on:
   workflow_dispatch:
