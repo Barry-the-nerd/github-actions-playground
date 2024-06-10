@@ -48,16 +48,16 @@ jobs:
         docker buildx inspect --bootstrap
 
     - name: Pull dev image
-      run: docker pull ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }}
+      run: docker pull ${{ env.TEST_IMAGE_NAME }}:${{ env.TAG }}
 
     - name: Get image digest
       id: get_digest
       run: |
-        DIGEST=$(docker buildx imagetools inspect ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} | grep -m 1 "Digest:" | awk '{ print $2 }')
+        DIGEST=$(docker buildx imagetools inspect ${{ env.TEST_IMAGE_NAME }}:${{ env.TAG }} | grep -m 1 "Digest:" | awk '{ print $2 }')
         echo "DIGEST=$DIGEST" >> $GITHUB_ENV
 
     - name: Tag image for prod
-      run: docker tag ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} ${{ env.PROD_IMAGE_NAME }}:${{ env.TAG }}
+      run: docker tag ${{ env.TEST_IMAGE_NAME }}:${{ env.TAG }} ${{ env.PROD_IMAGE_NAME }}:${{ env.TAG }}
 
     - name: Push prod image with provided or default tag
       run: docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.PROD_IMAGE_NAME }}:${{ env.TAG }} --push .
