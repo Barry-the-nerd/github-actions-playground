@@ -18,7 +18,7 @@ jobs:
         sudo apt-get install -y jq
 
     - name: Authenticate with GitHub Container Registry
-      run: echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+      run: echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
 
     - name: List and delete old Docker images
       env:
