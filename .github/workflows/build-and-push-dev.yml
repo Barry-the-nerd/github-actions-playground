@@ -1,4 +1,4 @@
-name: new Build and Push to Dev
+name: Build and Push to Dev
 
 on:
   push:
@@ -51,14 +51,14 @@ jobs:
     - name: Build Docker image
       run: docker build -t ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} .
 
+    - name: Push Docker image with provided or default tag
+      run: docker push ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }}
+
     - name: Get image digest
       id: get_digest
       run: |
         DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }} | cut -d'@' -f2)
         echo "DIGEST=$DIGEST" >> $GITHUB_ENV
-
-    - name: Push Docker image with provided or default tag
-      run: docker push ${{ env.DEV_IMAGE_NAME }}:${{ env.TAG }}
 
     - name: Push Docker image with latest tag
       run: |
