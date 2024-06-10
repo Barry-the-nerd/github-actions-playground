@@ -1,10 +1,10 @@
-name: Build and Push to Dev
+name: Build and Push to Dev new
 
 on:
   push:
     paths:
       - '/Dockerfile' 
-      - '.github/workflows/auto-push-dev.yml' 
+      - '.github/workflows/auto-push-dev-new.yml' 
     branches:
       - dev
   schedule:
