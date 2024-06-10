@@ -1,10 +1,11 @@
-name: Build and Push to Dev
+name: Build and Push to Dev # this is shown in the workflow run
 
 on:
   push:
     paths:
       - '/Dockerfile' # use 'Dockerfile' for any Dockerfile in the repo
-      - '.github/workflows/build-and-push-dev.yml' # Trigger when the workflow file is updated
+      - '.github/workflows/build-and-push-dev.yml' # Trigger when yml is updated
+        # the commit message is shown in the workflow run
     branches:
       - main # Change to main branch
   schedule:
