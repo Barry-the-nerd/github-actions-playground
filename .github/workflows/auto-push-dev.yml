@@ -10,6 +10,11 @@ on:
   schedule:
     - cron: '0 2 * * *'
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag for the Docker image'
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -73,6 +78,12 @@ jobs:
         name: dev-build-info
         path: dev-build-info.json
 
-    - name: Log to Google Sheets
+    - name: Log success to Google Sheets
+      if: success()
       run: |
-        curl -X POST -H "Content-Type: application/json" -d '{"image_name": "${{ env.DEV_IMAGE_NAME }}", "tag": "${{ env.TAG }}", "digest": "${{ env.DIGEST }}"}' ${{ secrets.GOOGLE_SHEETS_WEB_APP_URL }}
+        curl -X POST -H "Content-Type: application/json" -d '{"image_name": "${{ env.DEV_IMAGE_NAME }}", "tag": "${{ env.TAG }}", "digest": "${{ env.DIGEST }}", "status": "successful"}' ${{ secrets.GOOGLE_SHEETS_WEB_APP_URL }}
+
+    - name: Log failure to Google Sheets
+      if: failure()
+      run: |
+        curl -X POST -H "Content-Type: application/json" -d '{"image_name": "${{ env.DEV_IMAGE_NAME }}", "tag": "${{ env.TAG }}", "digest": "${{ env.DIGEST }}", "status": "failed"}' ${{ secrets.GOOGLE_SHEETS_WEB_APP_URL }}
