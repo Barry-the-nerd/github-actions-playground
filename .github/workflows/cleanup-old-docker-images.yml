@@ -26,19 +26,21 @@ jobs:
 
     - name: List and delete old Docker images
       env:
+        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
         DOCKER_ACCESS_TOKEN: ${{ secrets.DOCKER_ACCESS_TOKEN }}
         REPO: stellarhub/dev-target
       run: |
         # Function to fetch all tags with pagination
         fetch_tags() {
           local repo=$1
-          local token=$2
+          local username=$2
+          local token=$3
           local page=1
           local per_page=100
           local tags=()
 
           while true; do
-            response=$(curl -s -H "Authorization: Bearer $token" "https://ghcr.io/v2/${repo}/tags/list?n=${per_page}&page=${page}")
+            response=$(curl -s -u $username:$token "https://hub.docker.com/v2/repositories/${repo}/tags/?page=${page}&page_size=${per_page}")
             echo "Response: $response"  # Log the response for debugging
 
             # Check if the response contains errors
@@ -47,7 +49,7 @@ jobs:
               exit 1
             fi
 
-            new_tags=$(echo $response | jq -r '.tags | select(. != null) | .[]')
+            new_tags=$(echo $response | jq -r '.results | select(. != null) | .[].name')
             
             if [ -z "$new_tags" ]; then
               break
@@ -61,7 +63,7 @@ jobs:
         }
 
         # Fetch all tags
-        images=$(fetch_tags $REPO $DOCKER_ACCESS_TOKEN)
+        images=$(fetch_tags $REPO $DOCKER_USERNAME $DOCKER_ACCESS_TOKEN)
         
         if [ -z "$images" ]; then
           echo "No images found in the repository."
@@ -75,21 +77,21 @@ jobs:
         
         for image in $images; do
           # Get the image details
-          image_info=$(curl -s -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/manifests/$image")
+          image_info=$(curl -s -u $DOCKER_USERNAME:$DOCKER_ACCESS_TOKEN "https://hub.docker.com/v2/repositories/${REPO}/tags/${image}/")
           echo "Fetched details for image: $image"
           
           # Get the creation date of the image in seconds
-          created_date=$(echo $image_info | jq -r '.history[0].v1Compatibility' | jq -r '.created' | xargs -I{} date -d {} +%s)
+          created_date=$(echo $image_info | jq -r '.last_updated' | xargs -I{} date -d {} +%s)
           echo "Image $image was created on $(date -d @$created_date)"
 
-          # Calculate the age of the image in days
-          age_days=$(( (current_date - created_date) / 86400 ))
-          echo "Image $image is $age_days days old"
+          # Calculate the age of the image in hours
+          age_hours=$(( (current_date - created_date) / 3600 ))
+          echo "Image $image is $age_hours hours old"
 
-          # Delete the image if it is older than 60 days (2 months)
-          if [ $age_days -gt 60 ]; then
-            digest=$(curl -sI -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/manifests/$image" | grep Docker-Content-Digest | awk '{print $2}')
-            curl -X DELETE -H "Authorization: Bearer $DOCKER_ACCESS_TOKEN" "https://ghcr.io/v2/${REPO}/manifests/${digest//[$'\t\r\n']}"
-            echo "Deleted image: $image (age: $age_days days)"
+          # Delete the image if it is older than 5 hours
+          if [ $age_hours -gt 5 ]; then
+            digest=$(echo $image_info | jq -r '.digest')
+            curl -X DELETE -u $DOCKER_USERNAME:$DOCKER_ACCESS_TOKEN "https://hub.docker.com/v2/repositories/${REPO}/tags/${image}/"
+            echo "Deleted image: $image (age: $age_hours hours)"
           fi
         done
