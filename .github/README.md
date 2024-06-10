@@ -1,0 +1,1 @@
+[![Auto Push to Dev](https://github.com/Barry-the-nerd/github-action-to-docker/actions/workflows/auto-push-dev.yml/badge.svg)](https://github.com/Barry-the-nerd/github-action-to-docker/actions/workflows/auto-push-dev.yml)
