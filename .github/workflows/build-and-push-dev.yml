@@ -5,6 +5,7 @@ on:
     paths:
       - '/Dockerfile' # use 'Dockerfile' for any Dockerfile in the repo
       - '.github/workflows/build-and-push-dev.yml' # Trigger when yml is updated
+        # the commit message is shown in the workflow run
     branches:
       - main # Change to main branch
   schedule:
@@ -25,11 +26,16 @@ jobs:
         TIMESTAMP=$(date +'%Y%m%d%H%M%S')
         echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
 
+    # do not use command directly for security reasons
+    # password will be stored unencrypted in /home/runner/.docker/config.json.
+    # use docker/login-action
+    # - name: Log in to Docker Hub
+    #  run: echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
     - name: Login to Docker Hub
-    uses: docker/login-action@v2
-    with:
-      username: ${{ secrets.DOCKER_USERNAME }}
-      password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
     - name: Build Docker image
       run: docker build -t stellarhub/dev-target:${{ env.TIMESTAMP }} .
