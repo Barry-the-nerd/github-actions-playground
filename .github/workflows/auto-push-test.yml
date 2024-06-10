@@ -52,7 +52,7 @@ jobs:
 
     - name: Save Dockerfile and tag information to JSON
       run: |
-        echo "{\"image_name\": \"${{ env.TARGET_IMAGE_NAME }}\", \"tag\": \"${{ env.TAG }}\", \"digest\": \"${{ env.DIGEST }}\"}" > dev-build-info.json
+        echo "{\"image_name\": \"${{ env.TARGET_IMAGE_NAME }}\", \"tag\": \"${{ env.TAG }}\", \"digest\": \"${{ env.DIGEST }}\"}" > test-build-info.json
 
     - name: Upload build info as artifact
       uses: actions/upload-artifact@v4
