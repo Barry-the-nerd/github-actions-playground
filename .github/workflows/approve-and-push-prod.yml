@@ -50,3 +50,14 @@ jobs:
       run: |
         docker tag stellarhub/prod-target:${{ env.TAG }} stellarhub/prod-target:latest
         docker push stellarhub/prod-target:latest
+
+    - name: Save tag information
+      run: |
+        echo "Prod Tag: ${{ env.TAG }}" > prod-build-info.txt
+        echo "Prod Tag: latest" >> prod-build-info.txt
+
+    - name: Upload build info as artifact
+      uses: actions/upload-artifact@v2
+      with:
+        name: prod-build-info
+        path: prod-build-info.txt
