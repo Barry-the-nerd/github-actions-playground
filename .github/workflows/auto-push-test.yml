@@ -1,27 +1,19 @@
-name: Build and Push to Dev
+name: Build and Push to test
 
 on:
   push:
     paths:
       - '/Dockerfile' 
-      - '.github/workflows/build-and-push-dev.yml' 
+      - '.github/workflows/auto-push-stagex.yml' 
     branches:
-      - main
-  schedule:
-    - cron: '0 2 * * *'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag for the Docker image'
-        required: false
-        default: ''
+      - test
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     env:
-      DEV_IMAGE_NAME: stellarhub/dev-target
+      DEV_IMAGE_NAME: stellarhub/stage-target
 
     steps:
     - name: Checkout code
@@ -75,5 +67,5 @@ jobs:
     - name: Upload build info as artifact
       uses: actions/upload-artifact@v4
       with:
-        name: dev-build-info
-        path: dev-build-info.json
+        name: stage-build-info
+        path: stage-build-info.json

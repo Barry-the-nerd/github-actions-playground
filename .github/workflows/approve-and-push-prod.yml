@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DEV_IMAGE_NAME: stellarhub/dev-target
+      TEST_IMAGE_NAME: stellarhub/test-target
       PROD_IMAGE_NAME: stellarhub/prod-target
 
     steps:
