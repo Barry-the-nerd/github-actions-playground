@@ -5,8 +5,8 @@ on:
     inputs:
       tag:
         description: 'Tag to deploy to production'
-        required: true
-        default: 'latest'
+        required: false
+        default: '' # Leave this blank to be set dynamically
 
 jobs:
   build:
@@ -16,14 +16,37 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+    - name: Set up Docker Build Tag
+      id: vars
+      run: |
+        TIMESTAMP=$(date +'%Y%m%d%H%M%S')
+        TAG="${{ github.event.inputs.tag }}"
+        if [ -z "$TAG" ]; then
+          TAG=$TIMESTAMP
+        fi
+        echo "TAG=$TAG" >> $GITHUB_ENV
+
+    - name: Display Tag for Confirmation
+      if: ${{ github.event_name == 'workflow_dispatch' }}
+      run: |
+        echo "Using tag: $TAG"
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
     - name: Pull dev image
-      run: docker pull stellarhub/dev-target:${{ github.event.inputs.tag }}
+      run: docker pull stellarhub/dev-target:${{ env.TAG }}
 
     - name: Tag image for prod
-      run: docker tag stellarhub/dev-target:${{ github.event.inputs.tag }} stellarhub/prod-target:${{ github.event.inputs.tag }}
+      run: docker tag stellarhub/dev-target:${{ env.TAG }} stellarhub/prod-target:${{ env.TAG }}
 
-    - name: Push prod image
-      run: docker push stellarhub/prod-target:${{ github.event.inputs.tag }}
+    - name: Push prod image with provided or default tag
+      run: docker push stellarhub/prod-target:${{ env.TAG }}
+
+    - name: Push prod image with latest tag
+      run: |
+        docker tag stellarhub/prod-target:${{ env.TAG }} stellarhub/prod-target:latest
+        docker push stellarhub/prod-target:latest

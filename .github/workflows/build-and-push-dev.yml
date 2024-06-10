@@ -49,10 +49,10 @@ jobs:
     - name: Build Docker image
       run: docker build -t stellarhub/dev-target:${{ env.TAG }} .
 
-    - name: Push Docker image
+    - name: Push Docker image with provided or default tag
       run: docker push stellarhub/dev-target:${{ env.TAG }}
 
-    - name: Update latest tag
+    - name: Push Docker image with latest tag
       run: |
         docker tag stellarhub/dev-target:${{ env.TAG }} stellarhub/dev-target:latest
         docker push stellarhub/dev-target:latest
