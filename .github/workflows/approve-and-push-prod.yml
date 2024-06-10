@@ -16,44 +16,55 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up Docker Build Tag
-      id: vars
-      run: |
-        TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-        TAG="${{ github.event.inputs.tag }}"
-        if [ -z "$TAG" ]; then
-          TAG=$TIMESTAMP
-        fi
-        echo "TAG=$TAG" >> $GITHUB_ENV
-
-    - name: Display Tag for Confirmation
-      if: ${{ github.event_name == 'workflow_dispatch' }}
-      run: |
-        echo "Using tag: $TAG"
-
     - name: Login to Docker Hub
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
+    - name: Get the latest digest from dev-target
+      id: get-latest-digest
+      run: |
+        LATEST_DIGEST=$(docker manifest inspect stellarhub/dev-target:latest | jq -r '.config.digest')
+        echo "LATEST_DIGEST=${LATEST_DIGEST}" >> $GITHUB_ENV
+
+    - name: Determine tag to use
+      id: determine-tag
+      run: |
+        if [ -z "${{ github.event.inputs.tag }}" ]; then
+          DEV_TAG=$(docker images stellarhub/dev-target --format '{{.Tag}}' | while read tag; do
+            DIGEST=$(docker manifest inspect stellarhub/dev-target:$tag | jq -r '.config.digest')
+            if [ "$DIGEST" == "${LATEST_DIGEST}" ]; then
+              echo $tag
+              break
+            fi
+          done)
+          if [ -z "$DEV_TAG" ]; then
+            echo "No matching tag found with the same digest as latest."
+            exit 1
+          fi
+        else
+          DEV_TAG=${{ github.event.inputs.tag }}
+        fi
+        echo "DEV_TAG=${DEV_TAG}" >> $GITHUB_ENV
+
     - name: Pull dev image
-      run: docker pull stellarhub/dev-target:${{ env.TAG }}
+      run: docker pull stellarhub/dev-target:${{ env.DEV_TAG }}
 
     - name: Tag image for prod
-      run: docker tag stellarhub/dev-target:${{ env.TAG }} stellarhub/prod-target:${{ env.TAG }}
+      run: docker tag stellarhub/dev-target:${{ env.DEV_TAG }} stellarhub/prod-target:${{ env.DEV_TAG }}
 
-    - name: Push prod image with provided or default tag
-      run: docker push stellarhub/prod-target:${{ env.TAG }}
+    - name: Push prod image with provided or found tag
+      run: docker push stellarhub/prod-target:${{ env.DEV_TAG }}
 
     - name: Push prod image with latest tag
       run: |
-        docker tag stellarhub/prod-target:${{ env.TAG }} stellarhub/prod-target:latest
+        docker tag stellarhub/prod-target:${{ env.DEV_TAG }} stellarhub/prod-target:latest
         docker push stellarhub/prod-target:latest
 
     - name: Save tag information
       run: |
-        echo "Prod Tag: ${{ env.TAG }}" > prod-build-info.txt
+        echo "Prod Tag: ${{ env.DEV_TAG }}" > prod-build-info.txt
         echo "Prod Tag: latest" >> prod-build-info.txt
 
     - name: Upload build info as artifact
