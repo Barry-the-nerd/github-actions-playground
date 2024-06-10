@@ -3,9 +3,13 @@ name: Build and Push to Dev
 on:
   push:
     paths:
-      - Dockerfile
+      - '/Dockerfile' # use 'Dockerfile' for any Dockerfile in the repo
+      - '.github/workflows/build-and-push-dev.yml' # Trigger when the workflow file is updated
+    branches:
+      - main # Change to main branch
   schedule:
     - cron: '0 2 * * *' # Nightly build at 2am
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   build:
