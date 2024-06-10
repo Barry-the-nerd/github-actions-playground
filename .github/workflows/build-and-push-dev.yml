@@ -11,6 +11,11 @@ on:
   schedule:
     - cron: '0 2 * * *' # Nightly build at 2am
   workflow_dispatch:  # Allows manual triggering
+    inputs:
+      tag:
+        description: 'Tag for the Docker image'
+        required: false
+        default: $(date +'%Y%m%d%H%M%S') # default to current timestamp
 
 jobs:
   build:
@@ -20,17 +25,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up Docker Build Timestamp
+    - name: Set up Docker Build Tag
       id: vars
       run: |
         TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-        echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
+        TAG=${{ github.event.inputs.tag }}
+        if [ -z "$TAG" ]; then
+          TAG=$TIMESTAMP
+        fi
+        echo "TAG=$TAG" >> $GITHUB_ENV
 
-    # do not use command directly for security reasons
-    # password will be stored unencrypted in /home/runner/.docker/config.json.
-    # use docker/login-action
-    # - name: Log in to Docker Hub
-    #  run: echo "${{ secrets.DOCKER_ACCESS_TOKEN }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
     - name: Login to Docker Hub
       uses: docker/login-action@v2
       with:
@@ -38,20 +42,20 @@ jobs:
         password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
     - name: Build Docker image
-      run: docker build -t stellarhub/dev-target:${{ env.TIMESTAMP }} .
+      run: docker build -t stellarhub/dev-target:${{ env.TAG }} .
 
     - name: Push Docker image
-      run: docker push stellarhub/dev-target:${{ env.TIMESTAMP }}
+      run: docker push stellarhub/dev-target:${{ env.TAG }}
 
     - name: Update latest tag
       run: |
-        docker tag stellarhub/dev-target:${{ env.TIMESTAMP }} stellarhub/dev-target:latest
+        docker tag stellarhub/dev-target:${{ env.TAG }} stellarhub/dev-target:latest
         docker push stellarhub/dev-target:latest
 
     - name: Save Dockerfile and tag information
       run: |
-        echo "Build Tag: ${{ env.TIMESTAMP }}" > build-info.txt
-        cp Dockerfile dockerfile-${{ env.TIMESTAMP }}
+        echo "Build Tag: ${{ env.TAG }}" > build-info.txt
+        cp Dockerfile dockerfile-${{ env.TAG }}
       shell: bash
 
     - name: Upload Dockerfile and build tag as artifact
@@ -60,4 +64,4 @@ jobs:
         name: dockerfile-and-tag
         path: |
           build-info.txt
-          dockerfile-${{ env.TIMESTAMP }}
+          dockerfile-${{ env.TAG }}

@@ -104,6 +104,7 @@ jobs:
           fi
           echo "Image $image was created on $(date -d @$created_date)"
 
+          
           # Calculate the age of the image in hours
           age_hours=$(( (current_date - created_date) / 3600 ))
           echo "Image $image is $age_hours hours old"
