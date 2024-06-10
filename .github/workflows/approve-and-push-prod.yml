@@ -38,7 +38,14 @@ jobs:
         password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
     - name: Pull dev image
+      id: pull_image
       run: docker pull stellarhub/dev-target:${{ env.TAG }}
+
+    - name: Get image digest
+      id: get_digest
+      run: |
+        DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' stellarhub/dev-target:${{ env.TAG }} | cut -d'@' -f2)
+        echo "DIGEST=$DIGEST" >> $GITHUB_ENV
 
     - name: Tag image for prod
       run: docker tag stellarhub/dev-target:${{ env.TAG }} stellarhub/prod-target:${{ env.TAG }}
@@ -51,18 +58,9 @@ jobs:
         docker tag stellarhub/prod-target:${{ env.TAG }} stellarhub/prod-target:latest
         docker push stellarhub/prod-target:latest
 
-    - name: Get Docker manifest
-      id: manifest
-      run: |
-        MANIFEST=$(docker manifest inspect stellarhub/prod-target:${{ env.TAG }})
-        echo "MANIFEST=$MANIFEST" >> $GITHUB_ENV
-
     - name: Save tag information to JSON
       run: |
-        IMAGE_NAME="stellarhub/prod-target"
-        TAG=${{ env.TAG }}
-        MANIFEST=${{ env.MANIFEST }}
-        echo "{\"image_name\": \"$IMAGE_NAME\", \"tag\": \"$TAG\", \"manifest\": $MANIFEST}" > prod-build-info.json
+        echo "{\"image_name\": \"stellarhub/prod-target\", \"tag\": \"${{ env.TAG }}\", \"digest\": \"${{ env.DIGEST }}\"}" > prod-build-info.json
 
     - name: Upload build info as artifact
       uses: actions/upload-artifact@v4
