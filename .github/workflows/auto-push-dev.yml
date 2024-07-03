@@ -8,7 +8,7 @@ on:
       - '/Dockerfile'
       - '.github/workflows/auto-push-dev.yml'
   schedule:
-    - cron: '0 2 * * *'
+    - cron: '0 2 * * 1'
   workflow_dispatch:
 
 jobs:
