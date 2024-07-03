@@ -20,7 +20,8 @@ jobs:
       id: vars
       run: |
         TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-        TAG="${{ github.event.inputs.tag }}"
+        # TAG="${{ github.event.inputs.tag }}"
+        TAG="${{ github.ref }}"
         if [ -z "$TAG" ]; then
           TAG=$TIMESTAMP
         fi
