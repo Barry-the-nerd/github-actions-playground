@@ -1,0 +1,79 @@
+name: test 001
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to deploy to production'
+        required: false
+        default: 'latest'
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      TEST_IMAGE_NAME: stellarhub/test-target
+      PROD_IMAGE_NAME: stellarhub/prod-target
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Tag
+      id: vars
+      run: |
+        if [ -z "${{ github.event.inputs.tag }}" ]; then
+          TAG=latest
+        else
+          TAG=${{ github.event.inputs.tag }}
+        fi
+        echo "TAG=$TAG" >> $GITHUB_ENV
+
+    - name: Display Tag for Confirmation
+      if: ${{ github.event_name == 'workflow_dispatch' }}
+      run: |
+        echo "Using tag: ${{ env.TAG }}"
+
+    - name: Login to Docker Hub
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+    - name: Set up Docker Buildx
+      run: |
+        docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+        docker buildx create --name mybuilder --use
+        docker buildx inspect --bootstrap
+
+    - name: Pull dev image
+      run: docker pull ${{ env.TEST_IMAGE_NAME }}:${{ env.TAG }}
+
+    - name: Get image digest
+      id: get_digest
+      run: |
+        DIGEST=$(docker buildx imagetools inspect ${{ env.TEST_IMAGE_NAME }}:${{ env.TAG }} | grep -m 1 "Digest:" | awk '{ print $2 }')
+        echo "DIGEST=$DIGEST" >> $GITHUB_ENV
+
+    - name: Tag image for prod
+      run: docker tag ${{ env.TEST_IMAGE_NAME }}:${{ env.TAG }} ${{ env.PROD_IMAGE_NAME }}:${{ env.TAG }}
+
+    - name: Push prod image with provided or default tag
+      run: docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.PROD_IMAGE_NAME }}:${{ env.TAG }} --push .
+
+    - name: Push prod image with latest tag
+      run: |
+        docker buildx build --platform linux/amd64,linux/arm64 -t ${{ env.PROD_IMAGE_NAME }}:latest --push .
+
+    - name: Save tag information to JSON
+      run: |
+        echo "{\"image_name\": \"${{ env.PROD_IMAGE_NAME }}\", \"tag\": \"${{ env.TAG }}\", \"digest\": \"${{ env.DIGEST }}\"}" > prod-build-info.json
+
+    - name: Upload build info as artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: prod-build-info
+        path: prod-build-info.json
