@@ -24,27 +24,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ vars.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-        
       - name: Examine variables
         run: |
           DOCKERFILE_VER=$(grep -m 1 '^ARG VERSION=' Dockerfile | cut -d '=' -f 2)
           echo "DOCKERFILE_VER=$DOCKERFILE_VER" >> $GITHUB_ENV   
 
           TIMESTAMP=$(date +'%Y%m%d%H%M%S')
-          echo "TIMESTAMP=$TIMESTAMP" >> GITHUB_ENV
+          echo "TIMESTAMP=$TIMESTAMP" >> $GITHUB_ENV
 
           TAG="${{ vars.TAG }}"
           echo "TAG=$TAG" >> $GITHUB_ENV
 
-      - name: Display variables for Confirmation
+      - name: Display variables
         run: |
           echo "TAG variable   : $TAG"
           echo "Dockerfile ARG : $VERSION"
@@ -71,7 +62,7 @@ jobs:
           fi
           echo "TAG=$TAG" >> $GITHUB_ENV
 
-      - name: Display Tag for Confirmation
+      - name: Display Tag for build
         run: |
           echo "TAG variable   : $TAG"
           echo "Dockerfile ARG : $VERSION"
