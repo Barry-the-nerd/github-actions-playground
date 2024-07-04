@@ -8,7 +8,7 @@ on:
       - '/Dockerfilex'
       - '.github/workflows/FileToWatch.yml'
   schedule:
-    - cron: '30 2 * * 9'
+    - cron: '0/21 2-5,8 31 1-mar 1-2,fri-sat'
   release:
     types: [published]
   workflow_dispatch:
