@@ -5,7 +5,7 @@ FROM alpine:latest
 ARG VERSION=1.0.0
 
 RUN echo "Hello, world!" > /message.txt && \
-    mkdir /data
+    mkdir -p /data
 
 VOLUME /data
 EXPOSE 8080

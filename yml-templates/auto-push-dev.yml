@@ -1,14 +1,6 @@
 name: Auto Push to Dev
 
 on:
-  push:
-    branches:
-      - dev
-    paths:
-      - '/Dockerfile'
-      - '.github/workflows/auto-push-dev.yml'
-  schedule:
-    - cron: '0 2 * * 1'
   workflow_dispatch:
 
 jobs:
