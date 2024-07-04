@@ -23,9 +23,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
 
       - name: Examine variables
         run: |
@@ -41,7 +38,7 @@ jobs:
       - name: Display variables
         run: |
           echo "TAG variable   : $TAG"
-          echo "Dockerfile ARG : $VERSION"
+          echo "Dockerfile ARG : $DOCKERFILE_VER"
           echo "Timestamp build: $TIMESTAMP"
 
       - name: Set up Docker Build Tag
@@ -68,7 +65,7 @@ jobs:
       - name: Display Tag for build
         run: |
           echo "TAG variable   : $TAG"
-          echo "Dockerfile ARG : $VERSION"
+          echo "Dockerfile ARG : $DOCKERFILE_VER"
           echo "Timestamp build: $TIMESTAMP"
           echo ${{ env.TAG }}
 
