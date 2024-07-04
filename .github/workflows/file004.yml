@@ -36,7 +36,7 @@ jobs:
       - name: Set up Docker Build Tag
         run: |
           VERSION=$(grep -m 1 'ARG VERSION=' Dockerfile | cut -d '=' -f 2)
-          echo "VERSIONN=$VERSION" >> $GITHUB_ENV
+          echo "VERSION=$VERSION" >> $GITHUB_ENV
 
           if [ "${{ github.event_name }}" = "release" ]; then
             TAG="${{ github.ref_name }}"
@@ -67,5 +67,5 @@ jobs:
           file: ./Dockerfile
           push: true
           tags: |
-            $IMAGE_NAME:latest
-            $IMAGE_NAME:$TAG
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:$TAG
