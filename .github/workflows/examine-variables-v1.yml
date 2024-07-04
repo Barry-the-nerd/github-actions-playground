@@ -1,4 +1,4 @@
-name: workflow name 004
+name: variables 001
 
 on:
   push:
@@ -24,14 +24,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ vars.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+      - name: Examine variables
+        run: |
+          DOCKERFILE_VER=$(grep -m 1 '^ARG VERSION=' Dockerfile | cut -d '=' -f 2)
+          echo "DOCKERFILE_VER=$DOCKERFILE_VER" >> $GITHUB_ENV   
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
+          echo "TIMESTAMP=$TIMESTAMP" >> GITHUB_ENV
+
+          TAG="${{ vars.TAG }}"
+          echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Set up Docker Build Tag
         run: |
@@ -61,16 +63,4 @@ jobs:
           echo "Timestamp build: $TIMESTAMP"
           echo ${{ env.TAG }}
 
-      - name: Build and push
-        uses: docker/build-push-action@v6
-        with:
-          platforms: linux/amd64,linux/arm64
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:${{ env.TAG }}
-            ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
-            ${{ env.IMAGE_NAME }}:${{ env.TIMESTAMP }}
             
