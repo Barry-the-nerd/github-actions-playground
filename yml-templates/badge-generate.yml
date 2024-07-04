@@ -1,0 +1,30 @@
+name: badge 007
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Generate badge data
+      run: |
+        BADGE_VALUE="passing"
+        echo '{"schemaVersion": 1, "label": "Helper", "message": "'$BADGE_VALUE'", "color": "green"}' > badge-data.json
+
+    - name: Create or update gist
+      uses: exuanbo/actions-deploy-gist@v1
+      with:
+        token: ${{ secrets.GIST_TOKEN }}
+        gist_id: ${{ vars.GIST_ID }}
+        file_path: badge-data.json
+        file_type: text
+
+# use shield.io endpoint badge https://shields.io/badges/endpoint-badge
+# ![Custom Badge](https://img.shields.io/endpoint?
+# url=https://gist.githubusercontent.com/<gist user>/
+# <gist id>/raw/<id >/badge-data.json)  
+# https://simpleicons.org/
+
+
