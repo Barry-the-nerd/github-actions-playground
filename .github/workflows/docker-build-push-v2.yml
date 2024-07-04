@@ -47,17 +47,19 @@ jobs:
               TAG="${{ vars.TAG }}"
             fi
           fi
+          TIMESTAMP=$(date +'%Y%m%d%H%M%S')
+          echo "TIMESTAMP=$TIMESTAMP" >> GITHUB_ENV
           if [ -z "$TAG" ]; then
-            TIMESTAMP=$(date +'%Y%m%d%H%M%S')
             TAG=$TIMESTAMP
           fi
           echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Display Tag for Confirmation
-        # if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          echo "Using tag       : $TAG"
-          echo "Using Dockerfile: $VERSION"
+          echo "TAG variable   : $TAG"
+          echo "Dockerfile ARG : $VERSION"
+          echo "Timestamp build: $TIMESTAMP"
+          echo ${{ env.TAG }}
 
       - name: Build and push
         uses: docker/build-push-action@v6
@@ -69,3 +71,6 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ env.TAG }}
+            ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+            ${{ env.IMAGE_NAME }}:${{ env.TIMESTAMP }}
+            

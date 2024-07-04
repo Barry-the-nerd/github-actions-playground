@@ -54,7 +54,6 @@ jobs:
           echo "TAG=$TAG" >> $GITHUB_ENV
 
       - name: Display Tag for Confirmation
-        # if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
           echo "Using tag       : $TAG"
           echo "Using Dockerfile: $VERSION"
