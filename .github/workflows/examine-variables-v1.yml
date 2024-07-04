@@ -35,6 +35,12 @@ jobs:
           TAG="${{ vars.TAG }}"
           echo "TAG=$TAG" >> $GITHUB_ENV
 
+      - name: Display variables for Confirmation
+        run: |
+          echo "TAG variable   : $TAG"
+          echo "Dockerfile ARG : $VERSION"
+          echo "Timestamp build: $TIMESTAMP"
+
       - name: Set up Docker Build Tag
         run: |
           VERSION=$(grep -m 1 '^ARG VERSION=' Dockerfile | cut -d '=' -f 2)
