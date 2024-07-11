@@ -1,0 +1,35 @@
+name: workflow 010
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Checkout Hugo site repository
+      uses: actions/checkout@v4
+      with:
+        repository: barry-the-nerd/github-actions-playground 
+        path: folder1
+        token: ${{ secrets.PAT_TOKEN }}
+
+    - name: Update Scout summary in Hugo site
+      run: |
+        mkdir -p folder1/content/scout-summary
+        cd folder1
+        echo '---' >> content/scout-summary/latest-scan.md
+
+    - name: Commit and push changes
+      run: |
+        cd folder1
+        git config user.name github-actions
+        git config user.email github-actions@github.com
+        git add .
+        git commit -m "Update Scout summary"
+        git push
+
