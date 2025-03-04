@@ -1,4 +1,4 @@
-name: workflow 010
+name: git-commit
 
 on:
   workflow_dispatch:
@@ -15,18 +15,18 @@ jobs:
       uses: actions/checkout@v4
       with:
         repository: barry-the-nerd/github-actions-playground 
-        path: folder1
+        path: repo_folder
         token: ${{ secrets.PAT_TOKEN }}
 
     - name: Update Scout summary in Hugo site
       run: |
         mkdir -p folder1/content/scout-summary
-        cd folder1
+        cd repo_folder
         echo '---' >> content/scout-summary/latest-scan.md
 
     - name: Commit and push changes
       run: |
-        cd folder1
+        cd repo_folder
         git config user.name github-actions
         git config user.email github-actions@github.com
         git add .
